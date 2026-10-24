@@ -3,7 +3,11 @@
 [![CI](https://github.com/RahilBhavan/shadowsolve/actions/workflows/ci.yml/badge.svg)](https://github.com/RahilBhavan/shadowsolve/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-ShadowSolve ranks routes through allow-listed constant-product (Uniswap V2 style) pools for a single order and records why it chose them. It is advisory only: it holds no keys, signs nothing and submits no transactions. A Rust HTTP solver reads chain state through read-only JSON-RPC, stores each advisory with its provenance in PostgreSQL, and serves a static dashboard with no JavaScript dependencies (it loads fonts from Google Fonts). Python code handles offline replay, model training and walk-forward evaluation.
+ShadowSolve ranks routes through allow-listed constant-product (Uniswap V2 style) pools for a single order and records why it chose them. It is advisory only: it holds no keys, signs nothing and submits no transactions. A Rust HTTP solver reads chain state through read-only JSON-RPC, stores each advisory with its provenance in PostgreSQL, and serves a static dashboard with no JavaScript dependencies and self-hosted fonts (no external requests). Python code handles offline replay, model training and walk-forward evaluation.
+
+![ShadowSolve dashboard in fixture mode at 1440 px: a banner marks the data as a fixture and an unsafe chain state, with readiness cards and an auction tape below.](docs/img/dashboard-fixture.png)
+
+*The dashboard in fixture mode (`index.html?fixture=1`), 1440 px wide, rendered with Playwright Firefox on 2026-10-24. The banner marks fixture data, not live chain state.*
 
 ## What it does
 
@@ -15,7 +19,7 @@ ShadowSolve ranks routes through allow-listed constant-product (Uniswap V2 style
 
 ### Walk-forward result (synthetic data)
 
-Source: `reports/walk-forward/report.json` (sha256 `f54f5d23…2f81`, 10 chronological folds). Lower is better.
+Source: `reports/walk-forward/report.json` (sha256 `245c39b4…a4a3`, 10 chronological folds). Lower is better.
 
 | Model | Brier | Log loss |
 |---|---:|---:|
@@ -23,7 +27,9 @@ Source: `reports/walk-forward/report.json` (sha256 `f54f5d23…2f81`, 10 chronol
 | boosted_tree | 0.2778 | 1.0672 |
 | logistic | 0.3856 | 1.7581 |
 
-The boosted tree does not beat the base rate on this stream. Re-running `python3 scripts/publish-walk-forward.py` on 2026-10-24 (Python 3.14.7, Linux) reproduced every metric above, but two fold-1 logistic provenance hashes differed, so the file hash differs from the published one. Treat the sha256 as tied to the published file, not as a cross-platform guarantee. The stream is synthetic, so these numbers say nothing about live MEV performance.
+The boosted tree does not beat the base rate on this stream. The stream is synthetic, so these numbers say nothing about live MEV performance.
+
+Provenance hashes are stable across platforms: floats are rounded to 10 decimals before hashing and before the report is written, so last-bit differences in `exp` and `log` do not change the sha256. Regenerating the report with `python3 scripts/publish-walk-forward.py` gave the same sha256 on Python 3.12.14, 3.13.15 and 3.14.7 (Linux). A pytest test (`research/test_walk_forward.py`) regenerates the report and compares it with the committed manifest. Rounding moved the stored metric values by at most 5e-11 compared with the earlier unrounded file, so the four-decimal figures above are unchanged.
 
 ## How it works
 
@@ -47,20 +53,21 @@ cargo fmt --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked          # 71 tests
 python3 -m pip install -r requirements-dev.txt
-python3 -m pytest                        # 178 tests
+python3 -m pytest                        # 180 tests
 python3 tests/mock_rpc.py --self-check
 node src/self-check.js
 python3 scripts/verify-pinned-pool.py --self-check
 bash tests/e2e-shadow-stack.sh           # Docker end-to-end: reorg, restart, dedupe, metrics
 ```
 
-Counts observed on 2026-10-24: 71 Rust tests (domain 2, pool-math 5, solver-engine 39 + 14, state-ingestion 11) and 178 pytest tests, all passing with Rust 1.97.0. `test_rust_serialized_candidate_contract` calls `cargo`, so put it on `PATH` before running pytest. No Rust test is ignored. The Docker end-to-end script was not re-run for this pass.
+Counts observed on 2026-10-24: 71 Rust tests (domain 2, pool-math 5, solver-engine 39 + 14, state-ingestion 11) and 178 pytest tests, all passing with Rust 1.97.0. `test_rust_serialized_candidate_contract` calls `cargo`; pytest skips it with a message when `cargo` is not on `PATH`. CI also runs `cargo audit --deny warnings` against `Cargo.lock`, and Dependabot proposes weekly updates for Cargo, pip, GitHub Actions and the Dockerfiles. No Rust test is ignored. The Docker end-to-end script was not re-run for this pass.
 
 ## Repository layout
 
 - `crates/`: Rust workspace (domain, pool math, solver engine, state ingestion)
 - `research/`: Python replay, training, export and walk-forward code, SQL, and its tests
 - `src/`, `index.html`, `styles.css`: static dashboard (plain JavaScript, no build step)
+- `fonts/`: self-hosted WOFF2 fonts (IBM Plex Sans, IBM Plex Mono, Space Grotesk) with their SIL OFL 1.1 license texts
 - `scripts/`: pool verification and walk-forward publishing
 - `tests/`: mock RPC, fixtures and the Docker end-to-end script
 - `infra/`: Dockerfiles, nginx config and Postgres migrations
@@ -89,7 +96,8 @@ The pinned pool (Uniswap V2 USDC/WETH on Ethereum mainnet) is documented in `doc
 - Non-goals: concentrated liquidity, multi-order optimization, wallets, signing, execution, settlement and live PnL claims.
 - No live profitability result exists. Walk-forward numbers come from synthetic data.
 - Not run against a mainnet RPC for this write-up. The tests use a mock RPC.
-- No screenshot is included yet.
+- The screenshot shows fixture data. No screenshot of live data exists because the stack was not run against a mainnet RPC.
+- The fonts are Latin-subset only. The fonts keep their own OFL licenses; the MIT license covers this project's code.
 
 ## License
 
