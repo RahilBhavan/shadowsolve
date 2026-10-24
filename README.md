@@ -29,7 +29,7 @@ Source: `reports/walk-forward/report.json` (sha256 `245c39b4…a4a3`, 10 chronol
 
 The boosted tree does not beat the base rate on this stream. The stream is synthetic, so these numbers say nothing about live MEV performance.
 
-Provenance hashes are stable across platforms: floats are rounded to 10 decimals before hashing and before the report is written, so last-bit differences in `exp` and `log` do not change the sha256. Regenerating the report with `python3 scripts/publish-walk-forward.py` gave the same sha256 on Python 3.12.14, 3.13.15 and 3.14.7 (Linux). A pytest test (`research/test_walk_forward.py`) regenerates the report and compares it with the committed manifest. Rounding moved the stored metric values by at most 5e-11 compared with the earlier unrounded file, so the four-decimal figures above are unchanged.
+Provenance hashes reproduced on Python 3.9–3.14 on Linux: floats are rounded to 10 decimals before hashing and before the report is written, so last-bit differences in `exp` and `log` do not change the sha256 (a value sitting exactly on a rounding boundary could still differ). Regenerating the report with `python3 scripts/publish-walk-forward.py` gave the same sha256 on Python 3.12.14, 3.13.15 and 3.14.7 (Linux). A pytest test (`research/test_walk_forward.py`) regenerates the report and compares it with the committed manifest. Rounding moved the stored metric values by at most 5e-11 compared with the earlier unrounded file, so the four-decimal figures above are unchanged.
 
 ## How it works
 
@@ -60,7 +60,7 @@ python3 scripts/verify-pinned-pool.py --self-check
 bash tests/e2e-shadow-stack.sh           # Docker end-to-end: reorg, restart, dedupe, metrics
 ```
 
-Counts observed on 2026-10-24: 71 Rust tests (domain 2, pool-math 5, solver-engine 39 + 14, state-ingestion 11) and 178 pytest tests, all passing with Rust 1.97.0. `test_rust_serialized_candidate_contract` calls `cargo`; pytest skips it with a message when `cargo` is not on `PATH`. CI also runs `cargo audit --deny warnings` against `Cargo.lock`, and Dependabot proposes weekly updates for Cargo, pip, GitHub Actions and the Dockerfiles. No Rust test is ignored. The Docker end-to-end script was not re-run for this pass.
+Counts observed on 2026-10-24: 71 Rust tests (domain 2, pool-math 5, solver-engine 39 + 14, state-ingestion 11) and 180 pytest tests, all passing with Rust 1.97.0. `test_rust_serialized_candidate_contract` calls `cargo`; pytest skips it with a message when `cargo` is not on `PATH`. CI also runs `cargo audit --deny warnings` against `Cargo.lock`, and Dependabot proposes weekly updates for Cargo, pip, GitHub Actions and the Dockerfiles. No Rust test is ignored. The Docker end-to-end script was not re-run for this pass.
 
 ## Repository layout
 
