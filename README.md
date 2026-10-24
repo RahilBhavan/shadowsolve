@@ -3,7 +3,7 @@
 [![CI](https://github.com/RahilBhavan/shadowsolve/actions/workflows/ci.yml/badge.svg)](https://github.com/RahilBhavan/shadowsolve/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-ShadowSolve ranks routes through allow-listed constant-product (Uniswap V2 style) pools for a single order and records why it chose them. It is advisory only: it holds no keys, signs nothing and submits no transactions. A Rust HTTP solver reads chain state through read-only JSON-RPC, stores each advisory with its provenance in PostgreSQL, and serves a dependency-free dashboard. Python code handles offline replay, model training and walk-forward evaluation.
+ShadowSolve ranks routes through allow-listed constant-product (Uniswap V2 style) pools for a single order and records why it chose them. It is advisory only: it holds no keys, signs nothing and submits no transactions. A Rust HTTP solver reads chain state through read-only JSON-RPC, stores each advisory with its provenance in PostgreSQL, and serves a static dashboard with no JavaScript dependencies (it loads fonts from Google Fonts). Python code handles offline replay, model training and walk-forward evaluation.
 
 ## What it does
 
@@ -23,7 +23,7 @@ Source: `reports/walk-forward/report.json` (sha256 `f54f5d23…2f81`, 10 chronol
 | boosted_tree | 0.2778 | 1.0672 |
 | logistic | 0.3856 | 1.7581 |
 
-The boosted tree does not beat the base rate on this stream. The stream is synthetic, so these numbers say nothing about live MEV performance.
+The boosted tree does not beat the base rate on this stream. Re-running `python3 scripts/publish-walk-forward.py` on 2026-10-24 (Python 3.14.7, Linux) reproduced every metric above, but two fold-1 logistic provenance hashes differed, so the file hash differs from the published one. Treat the sha256 as tied to the published file, not as a cross-platform guarantee. The stream is synthetic, so these numbers say nothing about live MEV performance.
 
 ## How it works
 
@@ -54,13 +54,13 @@ python3 scripts/verify-pinned-pool.py --self-check
 bash tests/e2e-shadow-stack.sh           # Docker end-to-end: reorg, restart, dedupe, metrics
 ```
 
-Counts observed on 2026-10-24: 71 Rust tests (domain 2, pool-math 5, solver-engine 39 + 14, state-ingestion 11) and 178 pytest tests, all passing. The Docker end-to-end script also passed, including its PostgreSQL checks. No Rust test is ignored.
+Counts observed on 2026-10-24: 71 Rust tests (domain 2, pool-math 5, solver-engine 39 + 14, state-ingestion 11) and 178 pytest tests, all passing with Rust 1.97.0. `test_rust_serialized_candidate_contract` calls `cargo`, so put it on `PATH` before running pytest. No Rust test is ignored. The Docker end-to-end script was not re-run for this pass.
 
 ## Repository layout
 
 - `crates/`: Rust workspace (domain, pool math, solver engine, state ingestion)
 - `research/`: Python replay, training, export and walk-forward code, SQL, and its tests
-- `src/`, `index.html`, `styles.css`: dependency-free dashboard
+- `src/`, `index.html`, `styles.css`: static dashboard (plain JavaScript, no build step)
 - `scripts/`: pool verification and walk-forward publishing
 - `tests/`: mock RPC, fixtures and the Docker end-to-end script
 - `infra/`: Dockerfiles, nginx config and Postgres migrations
@@ -89,6 +89,7 @@ The pinned pool (Uniswap V2 USDC/WETH on Ethereum mainnet) is documented in `doc
 - Non-goals: concentrated liquidity, multi-order optimization, wallets, signing, execution, settlement and live PnL claims.
 - No live profitability result exists. Walk-forward numbers come from synthetic data.
 - Not run against a mainnet RPC for this write-up. The tests use a mock RPC.
+- No screenshot is included yet.
 
 ## License
 

@@ -12,7 +12,7 @@ This directory contains a deterministic, content-addressed walk-forward report o
 | `report.json.manifest.json` | Manifest with bytes + sha256 |
 | `report-<sha256>.json` | Content-addressed copy |
 
-Re-publish:
+Re-publish (on 2026-10-24, Python 3.14.7 on Linux reproduced every metric below; two fold-1 logistic provenance hashes differed, so the report sha256 differed from the one published here):
 
 ```sh
 python3 scripts/publish-walk-forward.py

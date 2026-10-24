@@ -12,7 +12,7 @@ Browser dashboard          Solver HTTP service           Research Python
                              state-ingestion (opt-in)
 ```
 
-The dashboard is a dependency-free ES-module UI. It reads the solver’s live projection or an explicit fixture projection (`?fixture=1` / `SHADOWSOLVE_DASHBOARD_MODE=fixture`).
+The dashboard is a ES-module UI with no JavaScript dependencies (fonts load from Google Fonts). It reads the solver’s live projection or an explicit fixture projection (`?fixture=1` / `SHADOWSOLVE_DASHBOARD_MODE=fixture`).
 
 ## Solve path
 
