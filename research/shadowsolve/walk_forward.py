@@ -9,8 +9,23 @@ from .calibrate import calibrate
 from .evaluate import metrics, paired_policy
 
 
+FLOAT_DECIMALS = 10
+
+
+def _normalize(value: Any) -> Any:
+    """Round floats so hashes survive last-bit libm differences across Python versions and platforms."""
+    if isinstance(value, float):
+        rounded = round(value, FLOAT_DECIMALS) if math.isfinite(value) else value
+        return rounded + 0.0  # turns -0.0 into 0.0
+    if isinstance(value, dict):
+        return {key: _normalize(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_normalize(item) for item in value]
+    return value
+
+
 def _canonical(value: Any) -> bytes:
-    return (json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False) + "\n").encode()
+    return (json.dumps(_normalize(value), sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False) + "\n").encode()
 
 
 def _hash(value: Any) -> str:
@@ -160,9 +175,9 @@ def walk_forward_report(observations: Iterable[ModelObservation], *, min_train_a
         aggregate[model]["auprc_defined"] = bool(defined)
         aggregate[model]["auprc"] = (sum(r["models"][model]["metrics"]["auprc"] * r["test"]["candidates"] for r in defined) /
                                       sum(r["test"]["candidates"] for r in defined) if defined else None)
-    return _validate_report({"schema_version": "walk-forward-v1", "config": config, "config_sha256": _hash(config),
-                             "feature_schema": list(names), "feature_schema_sha256": _hash(list(names)),
-                             "fold_count": len(records), "folds": records, "aggregate": aggregate})
+    return _validate_report(_normalize({"schema_version": "walk-forward-v1", "config": config, "config_sha256": _hash(config),
+                                        "feature_schema": list(names), "feature_schema_sha256": _hash(list(names)),
+                                        "fold_count": len(records), "folds": records, "aggregate": aggregate}))
 
 
 def _resolved_boundary(root):

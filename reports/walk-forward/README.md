@@ -12,7 +12,7 @@ This directory contains a deterministic, content-addressed walk-forward report o
 | `report.json.manifest.json` | Manifest with bytes + sha256 |
 | `report-<sha256>.json` | Content-addressed copy |
 
-Re-publish (on 2026-10-24, Python 3.14.7 on Linux reproduced every metric below; two fold-1 logistic provenance hashes differed, so the report sha256 differed from the one published here):
+Re-publish (the sha256 below was reproduced on Python 3.12, 3.13 and 3.14; floats are rounded to 10 decimals before hashing):
 
 ```sh
 python3 scripts/publish-walk-forward.py
@@ -20,7 +20,7 @@ python3 scripts/publish-walk-forward.py
 
 ## Ablation (aggregate over folds)
 
-Published report sha256: `f54f5d23034d529dff437cfba8e4139e8208cc607543a6f87da203ea76c42f81`
+Published report sha256: `245c39b4d19a5b4804fd0c5c83fd79bfc9f62a36a16f33086f8252764670a4a3`
 
 | Model | Brier | Log loss | Feasibility base rate |
 |---|---:|---:|---:|

@@ -1,4 +1,5 @@
 import json
+import shutil
 import subprocess
 
 import pytest
@@ -20,6 +21,8 @@ FIXTURES = {
 def test_contracts_load_and_validate():
     for name, value in FIXTURES.items(): assert validate(value, load_contract(name))
 
+@pytest.mark.skipif(shutil.which("cargo") is None,
+                    reason="cargo not found on PATH: install Rust (see rust-toolchain.toml) to run the Rust-to-Python contract check")
 def test_rust_serialized_candidate_contract():
     output = subprocess.run(
         ["cargo", "run", "--quiet", "-p", "shadowsolve-solver-engine", "--", "--emit-contract-fixture"],
