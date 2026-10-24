@@ -1,0 +1,21 @@
+# Rust
+/target/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local environment and generated data
+.env
+models/
+.probe-wf-*/
+*.json.tmp
+
+# OS and editor files
+.DS_Store
+.vscode/
+.idea/
+.cursor/

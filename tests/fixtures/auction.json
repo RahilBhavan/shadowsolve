@@ -1,0 +1,1 @@
+{"id":"auction-1","block":1,"tokens":["WETH","USDC"],"orders":[{"id":"order-1","sell_token":"WETH","buy_token":"USDC","sell_amount":"100","min_buy_amount":"1","kind":"sell"}],"state":{"observed_block":1,"deadline_ms":1000}}

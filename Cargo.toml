@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/domain", "crates/pool-math", "crates/solver-engine", "crates/state-ingestion"]
+resolver = "2"

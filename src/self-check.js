@@ -1,0 +1,37 @@
+import {readFile} from 'node:fs/promises';
+import {renderSection, SECTIONS, NAV_GROUPS, normalize, escapeHtml, isFixture} from './render.js';
+import {chart} from './charts.js';
+import {selectSection} from './navigation.js';
+
+const d = JSON.parse(await readFile(new URL('../fixtures/dashboard.json', import.meta.url), 'utf8'));
+const failures = [];
+const check = (name, ok) => { if (!ok) failures.push(name); };
+const nonTape = renderSection('candidates', {...d, meta: {...d.meta, stale: true, modelFallback: true}});
+check('global stale/fallback banner', nonTape.includes('status-banner') && nonTape.includes('Stale') && nonTape.includes('fallback'));
+check('fixture banner', renderSection('tape', d).includes('Fixture projection'));
+check('isFixture detects fixture meta', isFixture(d) === true);
+check('readiness walkthrough', renderSection('tape', d).includes('Readiness') && renderSection('tape', d).includes('readiness-row') && renderSection('tape', d).includes('Service readiness'));
+check('provenance-first tape', renderSection('tape', d).includes('Latest advisory provenance'));
+check('nav groups', NAV_GROUPS.length === 2 && SECTIONS.length === 8);
+check('snake case notifications', renderSection('tape', {...d, notifications:[{auction_id:'x',outcome:'accepted'}]}).includes('x'));
+check('live research panels stay honest', renderSection('experiment', {meta:{source:'live'},experiment:'Unavailable'}).includes('unavailable in live projection'));
+check('empty horizons stay honest', renderSection('fragility', {meta:{source:'live'},horizons:[]}).includes('unavailable in live projection'));
+check('hash wins storage', selectSection('failures', 'tape') === 'failures');
+check('storage fallback', selectSection('bad', 'route') === 'route');
+check('error escaping', escapeHtml('<img src=x onerror=alert(1)>') === '&lt;img src=x onerror=alert(1)&gt;');
+const malformed = normalize({...d, candidates: [null, 3, {}, []], horizons: [null, 'x']});
+check('malformed entries removed/defaulted', malformed.candidates.length === 1 && malformed.horizons.length === 0 && !renderSection('candidates', {...d, candidates: [null, 3]}).includes('undefined'));
+const charts = chart([{label: 'neg', value: -1}, {label: 'high', value: 2}, {label: 'ok', value: .5}], {range: [0, 1]});
+check('chart range invalid markers', charts.includes('bar-invalid') && !charts.includes('bar--'));
+check('chart labelled', charts.includes('chart-block') && charts.includes('chart-summary-') && charts.includes('aria-hidden="true"'));
+check('section title id', renderSection('tape', d).includes('id="section-title"'));
+check('candidate th scope', renderSection('candidates', d).includes('scope="col"'));
+const html = SECTIONS.map(([id]) => renderSection(id, d)).join('');
+check('eight sections', SECTIONS.length === 8);
+check('tables', (html.match(/<table/g) || []).length >= 8);
+check('escaping', !html.includes('<script>'));
+check('no inline chart styles', !html.includes('style='));
+if (failures.length) {
+  console.error(`SELF-CHECK FAILED: ${failures.join(', ')}`);
+  process.exitCode = 1;
+} else console.log('SELF-CHECK PASSED: branding layout, status, normalization, selection, chart a11y.');

@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shadowsolve_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shadowsolve_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-shadowsolve}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+  solver:
+    build: { context: ., dockerfile: infra/solver/Dockerfile }
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://shadowsolve_dev:shadowsolve_dev@postgres:5432/shadowsolve}
+      SOLVER_BIND: 0.0.0.0:8080
+      NOTIFICATION_REPOSITORY_PATH: /var/lib/shadowsolve/notifications.json
+      SHADOWSOLVE_MODEL_PATH: ${SHADOWSOLVE_MODEL_PATH:-}
+      SHADOWSOLVE_PROTOCOL_POLICY_PATH: ${SHADOWSOLVE_PROTOCOL_POLICY_PATH:-}
+      SHADOWSOLVE_DASHBOARD_MODE: ${SHADOWSOLVE_DASHBOARD_MODE:-live}
+      SHADOWSOLVE_INGESTION_ENABLED: ${SHADOWSOLVE_INGESTION_ENABLED:-false}
+      SHADOWSOLVE_RPC_URL: ${SHADOWSOLVE_RPC_URL:-}
+      SHADOWSOLVE_NETWORK: ${SHADOWSOLVE_NETWORK:-ethereum-mainnet}
+      SHADOWSOLVE_START_BLOCK: ${SHADOWSOLVE_START_BLOCK:-0}
+      SHADOWSOLVE_FINALITY_DEPTH: ${SHADOWSOLVE_FINALITY_DEPTH:-12}
+      SHADOWSOLVE_POLL_SECONDS: ${SHADOWSOLVE_POLL_SECONDS:-5}
+      SHADOWSOLVE_MAX_AGE_SECONDS: ${SHADOWSOLVE_MAX_AGE_SECONDS:-60}
+      SHADOWSOLVE_INGESTION_POOLS: ${SHADOWSOLVE_INGESTION_POOLS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${SOLVER_HOST_PORT:-8080}:8080"
+    volumes:
+      - solver-notifications:/var/lib/shadowsolve
+      - ${MODEL_ARTIFACT_HOST_PATH:-./models}:/models:ro
+      - ./tests/fixtures:/test-fixtures:ro
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ['CMD', '/usr/local/bin/solver', '--healthcheck']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+  dashboard:
+    build: { context: ., dockerfile: infra/dashboard/Dockerfile }
+    depends_on:
+      solver: { condition: service_healthy }
+    ports:
+      - "127.0.0.1:${DASHBOARD_HOST_PORT:-5173}:8080"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    restart: unless-stopped
+  mock-rpc:
+    profiles: [e2e]
+    build: { context: ., dockerfile: infra/research/Dockerfile }
+    command: ["python3", "/app/mock_rpc.py", "--host", "0.0.0.0", "18545"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18545/health')"]
+      interval: 1s
+      timeout: 2s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp
+  research:
+    profiles: [research]
+    build: { context: ., dockerfile: infra/research/Dockerfile }
+    command: ["python3", "-m", "pytest", "research"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp
+volumes:
+  postgres-data:
+  solver-notifications:

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Structural JSON validation only; canonical Python semantic validation enforces arithmetic relationships, snapshot coherence, horizons, and provenance.",
+  "type": "object",
+  "required": [
+    "id", "auction_id", "candidate_id", "network", "decision_block", "decision_hash",
+    "horizon", "future_block", "future_block_hash", "future_output", "feasible",
+    "margin_remaining", "margin_erosion", "score_decay"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "auction_id": {"type": "string", "minLength": 1},
+    "candidate_id": {"type": "string", "minLength": 1},
+    "network": {"type": "string", "minLength": 1},
+    "decision_block": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+    "decision_hash": {"type": "string", "minLength": 1},
+    "horizon": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+    "future_block": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+    "future_block_hash": {"type": "string", "minLength": 1},
+    "future_output": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+    "feasible": {"type": "boolean"},
+    "margin_remaining": {"type": "string", "pattern": "^(?:0|-?[1-9][0-9]*)$"},
+    "margin_erosion": {"type": "string", "pattern": "^(?:0|-?[1-9][0-9]*)$"},
+    "score_decay": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"}
+  },
+  "additionalProperties": false
+}

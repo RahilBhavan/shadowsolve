@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none';">
+  <meta name="description" content="ShadowSolve — advisory-only constant-product auction shadow solver dashboard.">
+  <title>ShadowSolve</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to dashboard content</a>
+  <header class="topbar">
+    <div class="brand-block">
+      <p class="brand">ShadowSolve</p>
+      <p class="eyebrow">Advisory research terminal · observation only</p>
+    </div>
+    <div class="topbar-meta">
+      <div class="system-state" title="Read-only observation mode">
+        <span class="pulse" aria-hidden="true"></span>
+        <span>Observation</span>
+      </div>
+      <p class="topbar-safety">No wallet · No signing · No settlement</p>
+    </div>
+  </header>
+  <div class="app-shell">
+    <nav class="rail" aria-label="Dashboard sections">
+      <label class="mobile-nav-label" for="mobile-nav">Section</label>
+      <select id="mobile-nav" class="mobile-nav" aria-controls="section-content" aria-describedby="mobile-nav-hint"></select>
+      <p id="mobile-nav-hint" class="sr-only">Choosing a section updates the dashboard panel.</p>
+      <div id="nav-list" class="nav-list"></div>
+      <p class="rail-note">Bounded CP shadow<br><span>Allow-listed pools · fail-closed readiness</span></p>
+    </nav>
+    <main id="content" tabindex="-1">
+      <div id="section-content" role="region" aria-labelledby="section-title" tabindex="-1"></div>
+    </main>
+  </div>
+  <div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

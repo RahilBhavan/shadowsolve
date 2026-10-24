@@ -1,0 +1,5 @@
+{
+  "network": "ethereum-mainnet",
+  "allowed_tokens": ["WETH", "USDC"],
+  "allowed_pools": [{"id":"symbolic-weth-usdc-30","token0":"WETH","token1":"USDC","fee_bps":30,"concentrated":false}]
+}
