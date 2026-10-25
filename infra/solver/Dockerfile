@@ -1,4 +1,4 @@
-FROM rust:1.97-slim@sha256:3b2879047d42784ca9403ad20c51ed3df361a50f1df96f5777d39b4e33aa65cd AS build
+FROM rust:1.98-slim@sha256:4cd829461bd5c4d511c32e269da9cb8929223b666519d8004e35fc8d1d771ab7 AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
