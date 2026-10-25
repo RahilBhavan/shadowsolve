@@ -112,3 +112,27 @@ def test_nonfinite_configuration_is_rejected(tmp_path):
         walk_forward_report(rows(), policy_threshold=float("nan"))
     with pytest.raises((ValueError, TypeError)):
         write_walk_forward_report(tmp_path / "report.json", rows(), logistic_kwargs={"l2": float("nan")})
+
+
+def test_hashes_ignore_last_bit_float_noise():
+    from shadowsolve.walk_forward import _hash
+
+    value = {"weights": [0.1 + 0.2, -0.0, 1.0 / 3.0], "bias": 2.5}
+    noisy = {"weights": [0.30000000000000004 + 1e-16, 0.0, 1.0 / 3.0 + 3e-17], "bias": 2.5}
+    assert _hash(value) == _hash(noisy)
+    assert _hash(value) != _hash({"weights": [0.3 + 1e-6, 0.0, 1.0 / 3.0], "bias": 2.5})
+
+
+def test_published_report_reproduces_from_the_publisher(tmp_path):
+    import importlib.util
+
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("publish_walk_forward", root / "scripts" / "publish-walk-forward.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    manifest = write_walk_forward_report(tmp_path / "report.json", module.observations(),
+                                         logistic_kwargs={"iterations": 40}, boosted_tree_kwargs={"iterations": 8},
+                                         policy_threshold=0.5)
+    published = json.loads((root / "reports" / "walk-forward" / "report.json.manifest.json").read_text())
+    assert manifest["sha256"] == published["sha256"]
+    assert manifest["bytes"] == published["bytes"]
